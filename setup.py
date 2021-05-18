@@ -5,7 +5,7 @@ with open('README.md', 'r', encoding='utf-8') as input_file:
 
 setup(
     name='python-stopwatch',
-    version='1.0.2',
+    version='1.0.3',
     author='Jonghwan Hyeon',
     author_email='hyeon0145@gmail.com',
     description='A simple stopwatch for measuring code performance',
