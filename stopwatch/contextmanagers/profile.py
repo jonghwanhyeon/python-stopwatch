@@ -25,7 +25,8 @@ def make_report(caller: Caller, name: str, statistics: Statistics) -> str:
 
 
 def print_report(caller: Caller, name: str, statistics: Statistics):
-    print(make_report(caller, name, statistics))
+    if len(statistics) > 0:
+        print(make_report(caller, name, statistics))
 
 
 def profile(func: Optional[Callable] = None, **kwargs) -> Callable:
