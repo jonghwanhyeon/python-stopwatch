@@ -1,3 +1,4 @@
+import atexit
 import functools
 import math
 from typing import Callable, Optional, Union
@@ -22,18 +23,21 @@ def make_report(caller: Caller, name: str, statistics: Statistics) -> str:
 
     return f'{tag} {items}'
 
-def profile(
-        func_or_name: Optional[Union[Callable, str]] = None,
-        name: Optional[str] = None) -> Callable:
+
+def print_report(caller: Caller, name: str, statistics: Statistics):
+    print(make_report(caller, name, statistics))
+
+
+def profile(func: Optional[Callable] = None, **kwargs) -> Callable:
     caller = inspect_caller()
 
     def decorated(func: Callable):
-        nonlocal name
-        name = func_or_name if isinstance(func_or_name, str) else name
-        if name is None:
-            name = func.__name__
+        name = kwargs.get('name', func.__name__)
+        report_every = kwargs.get('report_every', 1)
+        should_report = report_every is not None
 
         statistics = Statistics()
+        atexit.register(print_report, caller, name, statistics)
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -41,8 +45,9 @@ def profile(
                 result = func(*args, **kwargs)
 
             statistics.add(stopwatch.elapsed)
-            print(make_report(caller, name, statistics))
+            if should_report and (len(statistics) % report_every) == 0:
+                print_report(caller, name, statistics)
 
             return result
         return wrapper
-    return decorated(func_or_name) if callable(func_or_name) else decorated
+    return decorated(func) if callable(func) else decorated

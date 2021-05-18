@@ -38,6 +38,7 @@ wait_for([0.1, 0.2, 0.3, 0.4, 0.5])
 # [__main__#wait_for] hits=4, mean=0.6519s, min=0.02ms, median=0.7020s, max=1.2036s, dev=0.4513s
 # [__main__#wait_for] hits=5, mean=0.8024s, min=0.02ms, median=0.9026s, max=1.4046s, dev=0.5036s
 # [__main__#wait_for] hits=6, mean=0.9196s, min=0.02ms, median=1.0531s, max=1.5055s, dev=0.5291s
+# [__main__#wait_for] hits=6, mean=0.9196s, min=0.02ms, median=1.0531s, max=1.5055s, dev=0.5291s
 
 
 @profile(name='wait for ts')
@@ -55,6 +56,35 @@ wait_for([0.1, 0.2, 0.3, 0.4, 0.5])
 # [__main__#wait for ts] hits=4, mean=0.6513s, min=0.01ms, median=0.7013s, max=1.2024s, dev=0.4509s
 # [__main__#wait for ts] hits=5, mean=0.8016s, min=0.01ms, median=0.9017s, max=1.4031s, dev=0.5031s
 # [__main__#wait for ts] hits=6, mean=0.9186s, min=0.01ms, median=1.0521s, max=1.5037s, dev=0.5286s
+# [__main__#wait for ts] hits=6, mean=0.9186s, min=0.01ms, median=1.0521s, max=1.5037s, dev=0.5286s
+
+
+
+@profile(name='wait for ts', report_every=2)
+def wait_for(ts):
+    if not ts:
+        return
+
+    time.sleep(ts[0])
+    wait_for(ts[1:])
+
+wait_for([0.1, 0.2, 0.3, 0.4, 0.5])
+# [__main__#wait for ts] hits=2, mean=0.2504s, min=0.01ms, median=0.2504s, max=0.5007s, dev=0.2503s
+# [__main__#wait for ts] hits=4, mean=0.6513s, min=0.01ms, median=0.7014s, max=1.2025s, dev=0.4510s
+# [__main__#wait for ts] hits=6, mean=0.9188s, min=0.01ms, median=1.0523s, max=1.5039s, dev=0.5287s
+# [__main__#wait for ts] hits=6, mean=0.9176s, min=0.01ms, median=1.0510s, max=1.5018s, dev=0.5279s
+
+
+@profile(name='wait for ts', report_every=None)
+def wait_for(ts):
+    if not ts:
+        return
+
+    time.sleep(ts[0])
+    wait_for(ts[1:])
+
+wait_for([0.1, 0.2, 0.3, 0.4, 0.5])
+# [__main__#wait for ts] hits=6, mean=0.9188s, min=0.01ms, median=1.0523s, max=1.5039s, dev=0.5287s
 
 
 with stopwatch():
