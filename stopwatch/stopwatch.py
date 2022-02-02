@@ -101,8 +101,7 @@ class Stopwatch:
         self.start()
         return self
 
-    def __exit__(self, exception_type: Any, exception_value: Any,
-                 traceback: Any) -> None:
+    def __exit__(self, *exception: Any) -> None:
         self.stop()
 
     def __str__(self) -> str:
