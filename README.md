@@ -1,7 +1,29 @@
 # Stopwatch
+
 A simple stopwatch for measuring code performance.
 
+## Installing
+
+To install the library, you can just run the following command:
+
+```shell
+# Linux/macOS
+python3 -m pip install python-stopwatch
+
+# Windows
+py -3 -m pip install python-stopwatch
+```
+
+To install the development version, do the following:
+
+```shell
+git clone https://github.com/jonghwanhyeon/python-stopwatch
+cd python-stopwatch
+python3 -m pip install .
+```
+
 ## Examples
+
 ```python
 import time
 from stopwatch import Stopwatch, profile
