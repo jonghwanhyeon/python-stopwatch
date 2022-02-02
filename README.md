@@ -34,6 +34,10 @@ time.sleep(3.0)
 stopwatch.stop()
 print(stopwatch.elapsed) # 3.003047182224691
 
+with Stopwatch() as stopwatch2:
+    time.sleep(3)
+print(f'Time elapsed: {stopwatch2}') # 3.0030s
+
 with Stopwatch(name='outer') as outer_stopwatch:
     with Stopwatch(name='inner') as inner_stopwatch:
         for i in range(5):
