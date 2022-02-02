@@ -3,10 +3,12 @@ from typing import List, Optional
 
 
 class Statistics:
-    def __init__(self, values: Optional[List[float]] = None):
-        self._values = [] if values is None else values
+    _values: List[float]
 
-    def add(self, value: float):
+    def __init__(self, values: Optional[List[float]] = None) -> None:
+        self._values = values or []
+
+    def add(self, value: float) -> None:
         self._values.append(value)
 
     @property
