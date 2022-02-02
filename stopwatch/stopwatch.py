@@ -5,6 +5,7 @@ import time
 from contextlib import contextmanager
 from typing import Any, Generator, List, Optional
 
+from .contextmanagers import format_elapsed_time
 from .statistics import Statistics
 
 
@@ -64,8 +65,8 @@ class Stopwatch:
             self._lap = None
 
     def reset(self) -> None:
-        self._laps: List[Lap] = []
-        self._lap: Optional[Lap] = None
+        self._laps = []
+        self._lap = None
 
     def report(self) -> str:
         statistics = Statistics(values=self.laps)
@@ -103,3 +104,9 @@ class Stopwatch:
     def __exit__(self, exception_type: Any, exception_value: Any,
                  traceback: Any) -> None:
         self.stop()
+
+    def __str__(self) -> str:
+        return format_elapsed_time(self.elapsed)
+
+    def __repr__(self) -> str:
+        return f'Stopwatch(name={self.name}, elapsed={self.elapsed})'
