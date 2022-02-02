@@ -1,7 +1,7 @@
 import atexit
 import functools
 import math
-from typing import Callable, Optional, Union
+from typing import Callable, Optional
 
 from termcolor import colored
 
