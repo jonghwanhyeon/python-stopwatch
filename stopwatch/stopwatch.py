@@ -3,7 +3,7 @@ import time
 from contextlib import contextmanager
 from typing import List, Optional
 
-from .statistics import Statistics
+from stopwatch.statistics import Statistics
 
 
 class Lap:
@@ -23,11 +23,10 @@ class Lap:
 
     @property
     def elapsed(self) -> float:
-        return ((time.perf_counter() - self._start) if self._running else 0.0) \
-               + sum(self._fractions)
+        return ((time.perf_counter() - self._start) if self._running else 0.0) + sum(self._fractions)
 
     def __repr__(self) -> str:
-        return f'Lap(running={self._running}, elapsed={self.elapsed:.4f})'
+        return f"Lap(running={self._running}, elapsed={self.elapsed:.4f})"
 
 
 class Stopwatch:
@@ -43,7 +42,7 @@ class Stopwatch:
 
     @contextmanager
     def lap(self):
-        self.start() # calling start twice consecutively -> use stack to solve this problem
+        self.start()  # calling start twice consecutively -> use stack to solve this problem
         yield
         self.stop()
 
@@ -59,17 +58,21 @@ class Stopwatch:
     def report(self):
         statistics = Statistics(values=self.laps)
 
-        items = [f'total={statistics.total:.4f}s']
+        items = [f"total={statistics.total:.4f}s"]
         if len(statistics) > 1:
-            items.extend([f'mean={statistics.mean:.4f}s',
-                          f'min={statistics.minimum:.4f}s',
-                          f'median={statistics.median:.4f}s',
-                          f'max={statistics.maximum:.4f}s',
-                          f'dev={math.sqrt(statistics.variance):.4f}s'])
+            items.extend(
+                [
+                    f"mean={statistics.mean:.4f}s",
+                    f"min={statistics.minimum:.4f}s",
+                    f"median={statistics.median:.4f}s",
+                    f"max={statistics.maximum:.4f}s",
+                    f"dev={math.sqrt(statistics.variance):.4f}s",
+                ]
+            )
 
-        return '[Stopwatch{tag}] {statistics}'.format(
-            tag=f'#{self.name}' if self.name is not None else '',
-            statistics=', '.join(items))
+        return "[Stopwatch{tag}] {statistics}".format(
+            tag=f"#{self.name}" if self.name is not None else "", statistics=", ".join(items)
+        )
 
     @property
     def name(self) -> str:
