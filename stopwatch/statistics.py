@@ -1,6 +1,7 @@
-import math
 import statistics
 from typing import List, Optional
+
+from stopwatch.utils import format_time
 
 
 class Statistics:
@@ -44,14 +45,17 @@ class Statistics:
         return len(self._values)
 
     def __repr__(self) -> str:
-        fields = [f"total={self.total:.4f}s"]
+        fields = [f"total={format_time(self.total)}"]
+
         if len(self) > 1:
             fields += [
-                f"mean={self.mean:.4f}s",
-                f"min={self.minimum:.4f}s",
-                f"median={self.median:.4f}s",
-                f"max={self.maximum:.4f}s",
-                f"stdev={self.stdev:.4f}s",
+                f"mean={format_time(self.mean)}",
+                f"min={format_time(self.minimum)}",
+                f"median={format_time(self.median)}",
+                f"max={format_time(self.maximum)}",
             ]
 
-        return f"{type(self).__name__}({' ,'.join(fields)})"
+        if len(self) > 2:
+            fields += [f"stdev={format_time(self.stdev)}"]
+
+        return ", ".join(fields)
