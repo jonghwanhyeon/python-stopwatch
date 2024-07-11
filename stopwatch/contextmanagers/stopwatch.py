@@ -1,37 +1,44 @@
-import sys
 from typing import Optional
 
 from termcolor import colored
 
+from stopwatch.logger import DefaultLogger, SupportsInfo
 from stopwatch.stopwatch import Stopwatch
-from stopwatch.utils import Caller, format_time, inspect_caller
+from stopwatch.utils import format_time, inspect_caller
 
 
 # pylint: disable=invalid-name
 class stopwatch:
-    __slots__ = ("_message", "_caller", "_stopwatch")
+    __slots__ = ("_caller", "_stopwatch", "_message", "_logger")
 
-    def __init__(self, message: Optional[str] = None):
-        self._message = message
+    def __init__(self, message: Optional[str] = None, logger: Optional[SupportsInfo] = None):
         self._caller = inspect_caller()
         self._stopwatch = Stopwatch()
+
+        self._message = message
+        self._logger = logger if logger is not None else DefaultLogger()
 
     def __enter__(self):
         self._stopwatch.start()
 
     def __exit__(self, *exception):
         self._stopwatch.stop()
-        print(self._format(self._message, self._caller, self._stopwatch.elapsed), file=sys.stderr)
+        self._logger.info(self._make_report())
 
-    @staticmethod
-    def _format(message: Optional[str], caller: Caller, elapsed: float) -> str:
+    def _make_report(self) -> str:
         items = [
-            colored(f"[{caller.module}:{caller.function}:{caller.line}]", color="blue", attrs=["bold"]),
+            colored("[", attrs=["bold"]),
+            colored(self._caller.module, color="blue", attrs=["bold"]),
+            colored(":", attrs=["bold"]),
+            colored(self._caller.function, color="green", attrs=["bold"]),
+            colored(":", attrs=["bold"]),
+            colored(f"L{self._caller.line}", color="yellow", attrs=["bold"]),
+            colored("]", attrs=["bold"]),
             " ~ ",
-            colored(format_time(elapsed), color="magenta", attrs=["bold"]),
+            colored(format_time(self._stopwatch.elapsed), color="magenta", attrs=["bold"]),
         ]
 
-        if message is not None:
-            items += [" - ", message]
+        if self._message is not None:
+            items += [" - ", self._message]
 
         return "".join(items)
