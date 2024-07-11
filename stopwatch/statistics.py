@@ -1,3 +1,4 @@
+import math
 import statistics
 from typing import List, Optional
 
@@ -41,3 +42,16 @@ class Statistics:
 
     def __len__(self) -> int:
         return len(self._values)
+
+    def __repr__(self) -> str:
+        fields = [f"total={self.total:.4f}s"]
+        if len(self) > 1:
+            fields += [
+                f"mean={self.mean:.4f}s",
+                f"min={self.minimum:.4f}s",
+                f"median={self.median:.4f}s",
+                f"max={self.maximum:.4f}s",
+                f"stdev={self.stdev:.4f}s",
+            ]
+
+        return f"{type(self).__name__}({' ,'.join(fields)})"
