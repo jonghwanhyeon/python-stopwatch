@@ -1,4 +1,5 @@
 import atexit
+import functools
 import inspect
 from contextlib import contextmanager
 from dataclasses import dataclass, field
@@ -130,6 +131,10 @@ def profile(*args, **kwargs) -> Union[
                 logger=arguments.logger,
             )
 
-        return context.run
+        @functools.wraps(func)
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> Union[R, Coroutine[Any, Any, R]]:
+            return context.run(*args, **kwargs)
+
+        return wrapper  # type: ignore
 
     return decorated(arguments.func) if arguments.func is not None else decorated
