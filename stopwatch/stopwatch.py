@@ -79,7 +79,7 @@ class Stopwatch:
         )
 
     @property
-    def name(self) -> str:
+    def name(self) -> Optional[str]:
         return self._name
 
     @property
