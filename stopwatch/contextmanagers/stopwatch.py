@@ -9,6 +9,8 @@ from stopwatch.stopwatch import Stopwatch
 
 # pylint: disable=invalid-name
 class stopwatch:
+    __slots__ = ("_message", "_caller", "_stopwatch")
+
     def __init__(self, message: Optional[str] = None):
         self._message = message
         self._caller = inspect_caller()

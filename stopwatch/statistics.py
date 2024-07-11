@@ -3,6 +3,8 @@ from typing import List, Optional
 
 
 class Statistics:
+    __slots__ = ("_values",)
+
     def __init__(self, values: Optional[List[float]] = None):
         self._values = [] if values is None else values
 

@@ -7,6 +7,8 @@ from stopwatch.statistics import Statistics
 
 
 class Lap:
+    __slots__ = ("_running", "_start", "_fractions")
+
     def __init__(self):
         self._running = False
         self._start = 0
@@ -30,6 +32,8 @@ class Lap:
 
 
 class Stopwatch:
+    __slots__ = ("_name", "_laps", "_lap")
+
     def __init__(self, name: Optional[str] = None):
         self._name = name
         self.reset()
