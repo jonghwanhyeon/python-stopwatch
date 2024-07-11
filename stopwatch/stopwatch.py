@@ -1,7 +1,10 @@
 import math
 import time
 from contextlib import contextmanager
-from typing import List, Optional
+from types import TracebackType
+from typing import List, Optional, Type
+
+from typing_extensions import Self
 
 from stopwatch.statistics import Statistics
 
@@ -90,9 +93,14 @@ class Stopwatch:
     def elapsed(self) -> float:
         return sum(self.laps)
 
-    def __enter__(self):
+    def __enter__(self) -> Self:
         self.start()
         return self
 
-    def __exit__(self, exception_type, exception_value, traceback):
+    def __exit__(
+        self,
+        exception_type: Type[BaseException],
+        exception_value: BaseException,
+        traceback: TracebackType,
+    ):
         self.stop()
