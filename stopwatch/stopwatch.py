@@ -1,8 +1,7 @@
 import math
 import time
 from contextlib import contextmanager
-from types import TracebackType
-from typing import List, Optional, Type
+from typing import List, Optional
 
 from typing_extensions import Self
 
@@ -97,10 +96,5 @@ class Stopwatch:
         self.start()
         return self
 
-    def __exit__(
-        self,
-        exception_type: Type[BaseException],
-        exception_value: BaseException,
-        traceback: TracebackType,
-    ):
+    def __exit__(self, *exception):
         self.stop()
