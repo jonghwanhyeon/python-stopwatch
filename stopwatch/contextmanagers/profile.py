@@ -1,7 +1,8 @@
 import atexit
-import functools
+import inspect
+from contextlib import contextmanager
 from dataclasses import dataclass, field
-from typing import Callable, Generic, Optional, TypeVar, Union
+from typing import Any, Callable, Coroutine, Generic, Optional, TypeVar, Union
 
 from termcolor import colored
 from typing_extensions import ParamSpec, overload
@@ -36,18 +37,35 @@ class ProfileArguments(Generic[P, R]):
             return cls(func=None, name=None, report_every=report_every, logger=logger)
 
 
-@dataclass
-class ProfileContext:
+@dataclass(frozen=True)
+class ProfileContext(Generic[P, R]):
     caller: Caller
+    func: Callable[P, R]
     name: Optional[str]
     report_every: Optional[int]
     logger: SupportsInfo
 
     statistics: Statistics = field(default_factory=Statistics)
 
+    def __post_init__(self):
+        atexit.register(self.print_report)
+
     @property
     def should_report(self) -> bool:
         return (self.report_every is not None) and ((len(self.statistics) % self.report_every) == 0)
+
+    def run(self, *args: P.args, **kwargs: P.kwargs):
+        with self._record():
+            return self.func(*args, **kwargs)
+
+    @contextmanager
+    def _record(self):
+        with Stopwatch() as stopwatch:
+            yield
+
+        self.statistics.add(stopwatch.elapsed)
+        if self.should_report:
+            self.print_report()
 
     def _make_report(self) -> str:
         prefix = "".join(
@@ -63,6 +81,15 @@ class ProfileContext:
 
     def print_report(self):
         self.logger.info(self._make_report())
+
+
+@dataclass(frozen=True)
+class AsyncProfileContext(ProfileContext[P, R]):
+    func: Callable[P, Coroutine[Any, Any, R]]
+
+    async def run(self, *args: P.args, **kwargs: P.kwargs):
+        with self._record():
+            return await self.func(*args, **kwargs)
 
 
 @overload
@@ -86,26 +113,23 @@ def profile(*args, **kwargs) -> Union[
     caller = inspect_caller()
 
     def decorated(func: Callable[P, R]) -> Callable[P, R]:
-        context = ProfileContext(
-            caller=caller,
-            name=arguments.name if arguments.name is not None else func.__name__,
-            report_every=arguments.report_every,
-            logger=arguments.logger,
-        )
+        if not inspect.iscoroutinefunction(func):
+            context = ProfileContext[P, R](
+                caller=caller,
+                func=func,
+                name=arguments.name if arguments.name is not None else func.__name__,
+                report_every=arguments.report_every,
+                logger=arguments.logger,
+            )
+        else:
+            context = AsyncProfileContext[P, R](
+                caller=caller,
+                func=func,
+                name=arguments.name if arguments.name is not None else func.__name__,
+                report_every=arguments.report_every,
+                logger=arguments.logger,
+            )
 
-        atexit.register(context.print_report)
-
-        @functools.wraps(func)
-        def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-            with Stopwatch() as stopwatch:
-                result = func(*args, **kwargs)
-
-            context.statistics.add(stopwatch.elapsed)
-            if context.should_report:
-                context.print_report()
-
-            return result
-
-        return wrapper
+        return context.run
 
     return decorated(arguments.func) if arguments.func is not None else decorated
