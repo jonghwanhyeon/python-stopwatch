@@ -1,7 +1,11 @@
 import inspect
-from collections import namedtuple
+from typing import NamedTuple
 
-Caller = namedtuple("Caller", ["module", "function", "line_number"])
+
+class Caller(NamedTuple):
+    module: str
+    function: str
+    line: int
 
 
 def format_time(value: float) -> str:
@@ -10,4 +14,10 @@ def format_time(value: float) -> str:
 
 def inspect_caller(offset: int = 0) -> Caller:
     stack = inspect.stack()[2 + offset]
-    return Caller(module=inspect.getmodule(stack.frame).__name__, function=stack.function, line_number=stack.lineno)
+    module = inspect.getmodule(stack.frame)
+
+    return Caller(
+        module=module.__name__ if module is not None else "Unknown",
+        function=stack.function,
+        line=stack.lineno,
+    )

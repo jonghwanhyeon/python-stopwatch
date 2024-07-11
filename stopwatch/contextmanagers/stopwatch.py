@@ -26,7 +26,7 @@ class stopwatch:
     @staticmethod
     def _format(message: Optional[str], caller: Caller, elapsed: float) -> str:
         items = [
-            colored(f"[{caller.module}:{caller.function}:{caller.line_number}]", color="blue", attrs=["bold"]),
+            colored(f"[{caller.module}:{caller.function}:{caller.line}]", color="blue", attrs=["bold"]),
             " ~ ",
             colored(format_time(elapsed), color="magenta", attrs=["bold"]),
         ]
