@@ -3,8 +3,8 @@ from typing import Optional
 
 from termcolor import colored
 
-from stopwatch.contextmanagers import Caller, format_elapsed_time, inspect_caller
 from stopwatch.stopwatch import Stopwatch
+from stopwatch.utils import Caller, format_time, inspect_caller
 
 
 # pylint: disable=invalid-name
@@ -28,7 +28,7 @@ class stopwatch:
         items = [
             colored(f"[{caller.module}:{caller.function}:{caller.line_number}]", color="blue", attrs=["bold"]),
             " ~ ",
-            colored(format_elapsed_time(elapsed), color="magenta", attrs=["bold"]),
+            colored(format_time(elapsed), color="magenta", attrs=["bold"]),
         ]
 
         if message is not None:

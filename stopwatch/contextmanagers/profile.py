@@ -5,9 +5,9 @@ from typing import Callable, Optional
 
 from termcolor import colored
 
-from stopwatch.contextmanagers import Caller, format_elapsed_time, inspect_caller
 from stopwatch.statistics import Statistics
 from stopwatch.stopwatch import Stopwatch
+from stopwatch.utils import Caller, format_time, inspect_caller
 
 
 def make_report(caller: Caller, name: str, statistics: Statistics) -> str:
@@ -21,11 +21,11 @@ def make_report(caller: Caller, name: str, statistics: Statistics) -> str:
     items = ", ".join(
         [
             f"hits={len(statistics)}",
-            f"mean={format_elapsed_time(statistics.mean)}",
-            f"min={format_elapsed_time(statistics.minimum)}",
-            f"median={format_elapsed_time(statistics.median)}",
-            f"max={format_elapsed_time(statistics.maximum)}",
-            f"dev={format_elapsed_time(math.sqrt(statistics.variance))}",
+            f"mean={format_time(statistics.mean)}",
+            f"min={format_time(statistics.minimum)}",
+            f"median={format_time(statistics.median)}",
+            f"max={format_time(statistics.maximum)}",
+            f"dev={format_time(math.sqrt(statistics.variance))}",
         ]
     )
 
