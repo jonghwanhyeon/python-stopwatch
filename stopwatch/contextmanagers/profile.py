@@ -1,13 +1,12 @@
 import atexit
 import functools
-import math
 from typing import Callable, Optional
 
 from termcolor import colored
 
 from stopwatch.statistics import Statistics
 from stopwatch.stopwatch import Stopwatch
-from stopwatch.utils import Caller, format_time, inspect_caller
+from stopwatch.utils import Caller, inspect_caller
 
 
 def make_report(caller: Caller, name: str, statistics: Statistics) -> str:
@@ -18,18 +17,7 @@ def make_report(caller: Caller, name: str, statistics: Statistics) -> str:
             colored("]", color="blue", attrs=["bold"]),
         ]
     )
-    items = ", ".join(
-        [
-            f"hits={len(statistics)}",
-            f"mean={format_time(statistics.mean)}",
-            f"min={format_time(statistics.minimum)}",
-            f"median={format_time(statistics.median)}",
-            f"max={format_time(statistics.maximum)}",
-            f"dev={format_time(math.sqrt(statistics.variance))}",
-        ]
-    )
-
-    return f"{tag} {items}"
+    return f"{tag} hits={len(statistics)}, {statistics!r}"
 
 
 def print_report(caller: Caller, name: str, statistics: Statistics):

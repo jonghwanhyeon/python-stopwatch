@@ -1,4 +1,3 @@
-import math
 import time
 from contextlib import contextmanager
 from typing import List, Optional
@@ -61,24 +60,10 @@ class Stopwatch:
         self._laps: List[Lap] = []
         self._lap: Optional[Lap] = None
 
-    def report(self):
+    def report(self) -> str:
+        tag = f"#{self.name}" if self.name is not None else ""
         statistics = Statistics(values=self.laps)
-
-        items = [f"total={statistics.total:.4f}s"]
-        if len(statistics) > 1:
-            items.extend(
-                [
-                    f"mean={statistics.mean:.4f}s",
-                    f"min={statistics.minimum:.4f}s",
-                    f"median={statistics.median:.4f}s",
-                    f"max={statistics.maximum:.4f}s",
-                    f"dev={math.sqrt(statistics.variance):.4f}s",
-                ]
-            )
-
-        return "[Stopwatch{tag}] {statistics}".format(
-            tag=f"#{self.name}" if self.name is not None else "", statistics=", ".join(items)
-        )
+        return f"[Stopwatch{tag}] {statistics!r}"
 
     @property
     def name(self) -> Optional[str]:
