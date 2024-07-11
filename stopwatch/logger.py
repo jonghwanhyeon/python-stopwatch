@@ -5,7 +5,7 @@ from typing_extensions import Protocol
 
 
 class SupportsInfo(Protocol):
-    def info(self, message: str, *args: Any, **kwargs: Any): ...
+    def info(self, *args: Any, **kwargs: Any): ...
 
 
 class DefaultLogger:
