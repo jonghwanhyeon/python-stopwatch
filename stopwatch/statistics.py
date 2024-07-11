@@ -35,6 +35,9 @@ class Statistics:
     def variance(self) -> float:
         return statistics.variance(self._values)
 
+    @property
+    def stdev(self) -> float:
+        return statistics.stdev(self._values)
 
     def __len__(self) -> int:
         return len(self._values)
