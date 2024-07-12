@@ -5,10 +5,10 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field
 from typing import Any, Callable, Coroutine, Generic, Optional, TypeVar, Union
 
-from termcolor import colored
 from typing_extensions import ParamSpec, overload
 
 from stopwatch.logger import DefaultLogger, SupportsInfo
+from stopwatch.markup import markup
 from stopwatch.statistics import Statistics
 from stopwatch.stopwatch import Stopwatch
 from stopwatch.utils import Caller, inspect_caller
@@ -22,20 +22,31 @@ class ProfileArguments(Generic[P, R]):
     func: Optional[Callable[P, R]]
     name: Optional[str]
     report_every: Optional[int]
+    format: str
     logger: SupportsInfo
 
     @classmethod
     def unpack(cls, *args, **kwargs):
         logger = kwargs.get("logger", DefaultLogger())
         report_every = kwargs.get("report_every", 1)
+        format = markup(
+            kwargs.get(
+                "format",
+                (
+                    "[bold][[[blue]{module}[/blue]:[green]{name}[/green]]][/bold]"
+                    " "
+                    "{statistics:hits, total, mean, min, median, max, stdev}"
+                ),
+            )
+        )
 
         if args:
             if callable(args[0]):
-                return cls(func=args[0], name=None, report_every=report_every, logger=logger)
+                return cls(func=args[0], name=None, report_every=report_every, format=format, logger=logger)
             else:
-                return cls(func=None, name=args[0], report_every=report_every, logger=logger)
+                return cls(func=None, name=args[0], report_every=report_every, format=format, logger=logger)
         else:
-            return cls(func=None, name=None, report_every=report_every, logger=logger)
+            return cls(func=None, name=None, report_every=report_every, format=format, logger=logger)
 
 
 @dataclass(frozen=True)
@@ -44,6 +55,7 @@ class ProfileContext(Generic[P, R]):
     func: Callable[P, R]
     name: Optional[str]
     report_every: Optional[int]
+    format: str
     logger: SupportsInfo
 
     statistics: Statistics = field(default_factory=Statistics)
@@ -69,16 +81,11 @@ class ProfileContext(Generic[P, R]):
             self.print_report()
 
     def _make_report(self) -> str:
-        prefix = "".join(
-            [
-                colored(f"[", attrs=["bold"]),
-                colored(f"{self.caller.module}", color="blue", attrs=["bold"]),
-                colored(f":", attrs=["bold"]),
-                colored(self.name, color="green", attrs=["bold"]),
-                colored("]", attrs=["bold"]),
-            ]
+        return self.format.format(
+            module=self.caller.module,
+            name=self.name,
+            statistics=self.statistics,
         )
-        return f"{prefix} {self.statistics:hits, total, mean, min, median, max, stdev}"
 
     def print_report(self):
         self.logger.info(self._make_report())
@@ -102,6 +109,11 @@ def profile(
     name: Optional[str] = None,
     /,
     report_every: Optional[int] = 1,
+    format: str = (
+        "[bold][[[blue]{module}[/blue]:[green]{name}[/green]]][/bold]"
+        " "
+        "{statistics:hits, total, mean, min, median, max, stdev}"
+    ),
     logger: Optional[SupportsInfo] = None,
 ) -> Callable[[Callable[P, R]], Callable[P, R]]: ...
 
@@ -120,6 +132,7 @@ def profile(*args, **kwargs) -> Union[
                 func=func,
                 name=arguments.name if arguments.name is not None else func.__name__,
                 report_every=arguments.report_every,
+                format=arguments.format,
                 logger=arguments.logger,
             )
         else:
@@ -128,6 +141,7 @@ def profile(*args, **kwargs) -> Union[
                 func=func,
                 name=arguments.name if arguments.name is not None else func.__name__,
                 report_every=arguments.report_every,
+                format=arguments.format,
                 logger=arguments.logger,
             )
 
