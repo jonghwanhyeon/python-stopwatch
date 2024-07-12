@@ -17,7 +17,7 @@ class stopwatch:
             "[bold][[[blue]{module}[/blue]:[green]{function}[/green]:[yellow]L{line}[/yellow]]][/bold]"
             " ~ "
             "[bold][magenta]{elapsed}[/magenta][/bold]"
-            " {message}"
+            "{message}"
         ),
         logger: Optional[SupportsInfo] = None,
     ):
