@@ -1,7 +1,21 @@
+from __future__ import annotations
+
+import re
 import statistics
-from typing import List, Optional
+from collections import OrderedDict
+from dataclasses import dataclass
+from typing import Callable, List, Optional
 
 from stopwatch.utils import format_time
+
+
+@dataclass(frozen=True)
+class Formatter:
+    func: Callable[[Statistics], str]
+    min_length: int = 1
+
+    def __call__(self, statistics: Statistics) -> str:
+        return self.func(statistics)
 
 
 class Statistics:
@@ -12,10 +26,6 @@ class Statistics:
 
     def add(self, value: float):
         self._values.append(value)
-
-    @property
-    def length(self) -> int:
-        return len(self)
 
     @property
     def mean(self) -> float:
@@ -45,21 +55,47 @@ class Statistics:
     def stdev(self) -> float:
         return statistics.stdev(self._values)
 
+    _formatters = OrderedDict(
+        [
+            ("hits", Formatter(lambda self: str(len(self)), min_length=0)),
+            ("mean", Formatter(lambda self: format_time(self.mean))),
+            ("maximum", Formatter(lambda self: format_time(self.maximum))),
+            ("max", Formatter(lambda self: format_time(self.maximum))),
+            ("median", Formatter(lambda self: format_time(self.median))),
+            ("minimum", Formatter(lambda self: format_time(self.minimum))),
+            ("min", Formatter(lambda self: format_time(self.minimum))),
+            ("total", Formatter(lambda self: format_time(self.total))),
+            ("variance", Formatter(lambda self: format_time(self.variance), min_length=2)),
+            ("stdev", Formatter(lambda self: format_time(self.stdev), min_length=2)),
+        ]
+    )
+
+    def dump(self, fields: Optional[List[str]] = None) -> str:
+        if fields is None:
+            fields = ["total", "mean", "min", "median", "max", "stdev"]
+
+        items = []
+        for field in fields:
+            if field not in self._formatters:
+                raise ValueError(f"Unknown field {field}")
+
+            formatter = self._formatters[field]
+            if len(self) < formatter.min_length:
+                continue
+
+            items.append(f"{field}={formatter(self)}")
+
+        return ", ".join(items)
+
     def __len__(self) -> int:
         return len(self._values)
 
     def __repr__(self) -> str:
-        fields = [f"total={format_time(self.total)}"]
+        return f"{type(self).__name__}({self.dump()})"
 
-        if len(self) > 1:
-            fields += [
-                f"mean={format_time(self.mean)}",
-                f"min={format_time(self.minimum)}",
-                f"median={format_time(self.median)}",
-                f"max={format_time(self.maximum)}",
-            ]
+    def __str__(self) -> str:
+        return self.dump()
 
-        if len(self) > 2:
-            fields += [f"stdev={format_time(self.stdev)}"]
-
-        return ", ".join(fields)
+    def __format__(self, specifier: str) -> str:
+        fields = re.split(r", *", specifier) if specifier else None
+        return self.dump(fields)

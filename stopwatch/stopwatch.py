@@ -63,7 +63,7 @@ class Stopwatch:
     def report(self) -> str:
         tag = f"#{self.name}" if self.name is not None else ""
         statistics = Statistics(values=self.laps)
-        return f"[Stopwatch{tag}] {statistics!r}"
+        return f"[Stopwatch{tag}] {statistics.dump()}"
 
     @property
     def name(self) -> Optional[str]:

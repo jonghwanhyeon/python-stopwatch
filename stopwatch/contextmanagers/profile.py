@@ -78,7 +78,7 @@ class ProfileContext(Generic[P, R]):
                 colored("]", attrs=["bold"]),
             ]
         )
-        return f"{prefix} hits={len(self.statistics)}, {self.statistics!r}"
+        return f"{prefix} {self.statistics:hits, total, mean, min, median, max, stdev}"
 
     def print_report(self):
         self.logger.info(self._make_report())
