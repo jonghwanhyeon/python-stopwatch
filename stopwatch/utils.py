@@ -9,10 +9,6 @@ class Caller:
     line: int
 
 
-def format_time(value: float) -> str:
-    return f"{value:.4f}s" if value >= 0.1 else f"{value * 1000:.2f}ms"
-
-
 def inspect_caller(offset: int = 0) -> Caller:
     stack = inspect.stack()[2 + offset]
     module = inspect.getmodule(stack.frame)
@@ -22,3 +18,7 @@ def inspect_caller(offset: int = 0) -> Caller:
         function=stack.function,
         line=stack.lineno,
     )
+
+
+def format_time(value: float) -> str:
+    return f"{value:.4f}s" if value >= 0.1 else f"{value * 1000:.2f}ms"
