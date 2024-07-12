@@ -14,6 +14,10 @@ class Statistics:
         self._values.append(value)
 
     @property
+    def length(self) -> int:
+        return len(self)
+
+    @property
     def mean(self) -> float:
         return statistics.mean(self._values)
 
