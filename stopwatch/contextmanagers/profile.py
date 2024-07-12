@@ -11,7 +11,7 @@ from stopwatch.logger import DefaultLogger, SupportsInfo
 from stopwatch.markup import markup
 from stopwatch.statistics import Statistics
 from stopwatch.stopwatch import Stopwatch
-from stopwatch.utils import Caller, inspect_caller
+from stopwatch.utils import Caller, format_time, inspect_caller
 
 P = ParamSpec("P")
 R = TypeVar("R")
@@ -84,6 +84,7 @@ class ProfileContext(Generic[P, R]):
         return self.format.format(
             module=self.caller.module,
             name=self.name,
+            elapsed=format_time(self.statistics[-1]) if self.statistics else None,
             statistics=self.statistics,
         )
 

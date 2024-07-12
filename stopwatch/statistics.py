@@ -90,6 +90,9 @@ class Statistics:
     def __len__(self) -> int:
         return len(self._values)
 
+    def __getitem__(self, index: int) -> float:
+        return self._values[index]
+
     def __repr__(self) -> str:
         return f"{type(self).__name__}({self.dump()})"
 
