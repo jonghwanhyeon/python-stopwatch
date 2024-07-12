@@ -1,8 +1,9 @@
 import inspect
-from typing import NamedTuple
+from dataclasses import dataclass
 
 
-class Caller(NamedTuple):
+@dataclass(frozen=True)
+class Caller:
     module: str
     function: str
     line: int
