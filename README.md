@@ -123,7 +123,7 @@ from stopwatch import profile
 
 @profile(
     "wait for ts",
-    format="[bold][[[blue]{module}[/blue]:[green]{name}[/green]]][/bold] {statistics:hits, mean, median, stdev}",
+    format="<bold>[<blue>{module}</blue>:<green>{name}</green>]</bold> {statistics:hits, mean, median, stdev}",
 )
 def wait_for(ts):
     if not ts:

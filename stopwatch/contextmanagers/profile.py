@@ -6,10 +6,10 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field
 from typing import Any, AsyncIterable, Callable, Coroutine, Generic, Iterable, Optional, Tuple, TypeVar, Union
 
+from tml import markup
 from typing_extensions import ParamSpec, Self, overload
 
 from stopwatch.logger import DefaultLogger, SupportsInfo
-from stopwatch.markup import markup
 from stopwatch.statistics import Statistics
 from stopwatch.stopwatch import Stopwatch
 from stopwatch.utils import Caller, format_time, inspect_caller
@@ -34,14 +34,14 @@ class ProfileArguments(Generic[P, R]):
             "report_every": 1,
             "report_at_exit": True,
             "format": (
-                "[bold][[[blue]{module}[/blue]:[green]{name}[/green]]][/bold]"
+                "<bold>[<blue>{module}</blue>:<green>{name}</green>]</bold>"
                 " ~ "
-                "[magenta]{elapsed}[/magenta]"
+                "<magenta>{elapsed}</magenta>"
                 " - "
                 "{statistics:hits, total, mean, min, median, max, stdev}"
             ),
             "format_at_exit": (
-                "[bold][[[blue]{module}[/blue]:[green]{name}[/green]]][/bold]"
+                "<bold>[<blue>{module}</blue>:<green>{name}</green>]</bold>"
                 " - "
                 "{statistics:hits, total, mean, min, median, max, stdev}"
             ),
@@ -174,14 +174,14 @@ def profile(
     report_every: Optional[int] = 1,
     report_at_exit: bool = True,
     format: str = (
-        "[bold][[[blue]{module}[/blue]:[green]{name}[/green]]][/bold]"
+        "<bold>[<blue>{module}</blue>:<green>{name}</green>]</bold>"
         " ~ "
-        "[magenta]{elapsed}[/magenta]"
+        "<magenta>{elapsed}</magenta>"
         " - "
         "{statistics:hits, total, mean, min, median, max, stdev}"
     ),
     format_at_exit: str = (
-        "[bold][[[blue]{module}[/blue]:[green]{name}[/green]]][/bold]"
+        "<bold>[<blue>{module}</blue>:<green>{name}</green>]</bold>"
         " - "
         "{statistics:hits, total, mean, min, median, max, stdev}"
     ),

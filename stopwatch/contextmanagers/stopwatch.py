@@ -1,7 +1,8 @@
 from typing import Optional
 
+from tml import markup
+
 from stopwatch.logger import DefaultLogger, SupportsInfo
-from stopwatch.markup import markup
 from stopwatch.stopwatch import Stopwatch
 from stopwatch.utils import format_time, inspect_caller
 
@@ -14,9 +15,9 @@ class stopwatch:
         self,
         message: Optional[str] = None,
         format: str = (
-            "[bold][[[blue]{module}[/blue]:[green]{function}[/green]:[yellow]L{line}[/yellow]]][/bold]"
+            "<bold>[<blue>{module}</blue>:<green>{function}</green>:<yellow>L{line}</yellow>]</bold>"
             " ~ "
-            "[bold][magenta]{elapsed}[/magenta][/bold]"
+            "<bold><magenta>{elapsed}</magenta></bold>"
             "{message}"
         ),
         logger: Optional[SupportsInfo] = None,
