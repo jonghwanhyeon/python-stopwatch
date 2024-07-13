@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import time
 from contextlib import contextmanager
-from typing import List, Optional
+from typing import Optional
 
 from typing_extensions import Self
 
@@ -57,7 +59,7 @@ class Stopwatch:
             self._lap = None
 
     def reset(self):
-        self._laps: List[Lap] = []
+        self._laps: list[Lap] = []
         self._lap: Optional[Lap] = None
 
     def report(self) -> str:
@@ -70,7 +72,7 @@ class Stopwatch:
         return self._name
 
     @property
-    def laps(self) -> List[float]:
+    def laps(self) -> list[float]:
         return [lap.elapsed for lap in self._laps]
 
     @property

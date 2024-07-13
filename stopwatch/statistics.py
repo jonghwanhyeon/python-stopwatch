@@ -4,7 +4,7 @@ import re
 import statistics
 from collections import OrderedDict
 from dataclasses import dataclass
-from typing import Callable, List, Optional
+from typing import Callable, Optional
 
 from stopwatch.utils import format_time
 
@@ -21,7 +21,7 @@ class Formatter:
 class Statistics:
     __slots__ = ("_values",)
 
-    def __init__(self, values: Optional[List[float]] = None):
+    def __init__(self, values: Optional[list[float]] = None):
         self._values = [] if values is None else values
 
     def add(self, value: float):
@@ -70,7 +70,7 @@ class Statistics:
         ]
     )
 
-    def dump(self, fields: Optional[List[str]] = None) -> str:
+    def dump(self, fields: Optional[list[str]] = None) -> str:
         if fields is None:
             fields = ["total", "mean", "min", "median", "max", "stdev"]
 
