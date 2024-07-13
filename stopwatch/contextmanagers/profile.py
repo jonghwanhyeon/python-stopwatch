@@ -1,11 +1,13 @@
 import atexit
 import functools
 import inspect
+from abc import ABC, abstractmethod
 from contextlib import contextmanager
-from dataclasses import dataclass, field
-from typing import Any, Callable, Coroutine, Generic, Optional, TypeVar, Union
+from dataclasses import asdict, dataclass, field
+from typing import Any, AsyncIterable, Callable, Coroutine, Generic, Iterable, Optional, Tuple, TypeVar, Union
 
-from typing_extensions import ParamSpec, overload
+from decorator import decorate
+from typing_extensions import ParamSpec, Self, overload
 
 from stopwatch.logger import DefaultLogger, SupportsInfo
 from stopwatch.markup import markup
@@ -17,59 +19,75 @@ P = ParamSpec("P")
 R = TypeVar("R")
 
 
-@dataclass(frozen=True)
+@dataclass
 class ProfileArguments(Generic[P, R]):
-    func: Optional[Callable[P, R]]
     name: Optional[str]
     report_every: Optional[int]
+    report_at_exit: bool
     format: str
     logger: SupportsInfo
 
     @classmethod
-    def unpack(cls, *args, **kwargs):
-        logger = kwargs.get("logger", DefaultLogger())
-        report_every = kwargs.get("report_every", 1)
-        format = markup(
-            kwargs.get(
-                "format",
-                (
-                    "[bold][[[blue]{module}[/blue]:[green]{name}[/green]]][/bold]"
-                    " "
-                    "{statistics:hits, total, mean, min, median, max, stdev}"
-                ),
-            )
-        )
+    def unpack(cls, *args: Union[Callable[P, R], str], **kwargs: Any) -> Tuple[Optional[Callable[P, R]], Self]:
+        defaults = {
+            "name": None,
+            "report_every": 1,
+            "report_at_exit": True,
+            "format": (
+                "[bold][[[blue]{module}[/blue]:[green]{name}[/green]]][/bold]"
+                " "
+                "{statistics:hits, total, mean, min, median, max, stdev}"
+            ),
+            "logger": DefaultLogger(),
+        }
 
+        arguments = {**defaults, **kwargs}
+        arguments["format"] = markup(arguments["format"])
+
+        func = None
         if args:
             if callable(args[0]):
-                return cls(func=args[0], name=None, report_every=report_every, format=format, logger=logger)
+                func = args[0]
             else:
-                return cls(func=None, name=args[0], report_every=report_every, format=format, logger=logger)
-        else:
-            return cls(func=None, name=None, report_every=report_every, format=format, logger=logger)
+                arguments["name"] = args[0]
+
+        return func, cls(**arguments)
 
 
-@dataclass(frozen=True)
+@dataclass
 class ProfileContext(Generic[P, R]):
     caller: Caller
     func: Callable[P, R]
-    name: Optional[str]
-    report_every: Optional[int]
-    format: str
-    logger: SupportsInfo
+    arguments: ProfileArguments[P, R]
 
     statistics: Statistics = field(default_factory=Statistics)
 
     def __post_init__(self):
-        atexit.register(self.print_report)
+        if self.arguments.report_at_exit:
+            atexit.register(self.print_report)
+
+    @overload
+    @abstractmethod
+    def build(self) -> Callable[P, R]: ...  # type: ignore
+
+    @overload
+    @abstractmethod
+    def build(self) -> Callable[P, Iterable[R]]: ...
+
+    @overload
+    @abstractmethod
+    async def build(self) -> Callable[P, Coroutine[Any, Any, R]]: ...
+
+    @overload
+    @abstractmethod
+    async def build(self) -> Callable[P, AsyncIterable[R]]: ...
 
     @property
     def should_report(self) -> bool:
-        return (self.report_every is not None) and ((len(self.statistics) % self.report_every) == 0)
+        return (self.arguments.report_every is not None) and ((len(self.statistics) % self.arguments.report_every) == 0)
 
-    def run(self, *args: P.args, **kwargs: P.kwargs):
-        with self._record():
-            return self.func(*args, **kwargs)
+    def print_report(self):
+        self.arguments.logger.info(self._make_report())
 
     @contextmanager
     def _record(self):
@@ -81,24 +99,61 @@ class ProfileContext(Generic[P, R]):
             self.print_report()
 
     def _make_report(self) -> str:
-        return self.format.format(
+        return self.arguments.format.format(
             module=self.caller.module,
-            name=self.name,
+            name=self.arguments.name,
             elapsed=format_time(self.statistics[-1]) if self.statistics else None,
             statistics=self.statistics,
         )
 
-    def print_report(self):
-        self.logger.info(self._make_report())
+
+@dataclass
+class FunctionProfileContext(ProfileContext[P, R]):
+    func: Callable[P, R]
+
+    def build(self) -> Callable[P, R]:
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+            with self._record():
+                return self.func(*args, **kwargs)
+
+        return wrapper
 
 
-@dataclass(frozen=True)
-class AsyncProfileContext(ProfileContext[P, R]):
+@dataclass
+class GeneratorFunctionProfileContext(ProfileContext[P, R]):
+    func: Callable[P, Iterable[R]]
+
+    def build(self) -> Callable[P, Iterable[R]]:
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> Iterable[R]:
+            with self._record():
+                yield from self.func(*args, **kwargs)
+
+        return wrapper
+
+
+@dataclass
+class AsyncFunctionProfileContext(ProfileContext[P, R]):
     func: Callable[P, Coroutine[Any, Any, R]]
 
-    async def run(self, *args: P.args, **kwargs: P.kwargs):
-        with self._record():
-            return await self.func(*args, **kwargs)
+    def build(self) -> Callable[P, Coroutine[Any, Any, R]]:
+        async def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+            with self._record():
+                return await self.func(*args, **kwargs)
+
+        return wrapper
+
+
+@dataclass
+class AsyncGeneratorFunctionProfileContext(ProfileContext[P, R]):
+    func: Callable[P, AsyncIterable[R]]
+
+    def build(self) -> Callable[P, AsyncIterable[R]]:
+        async def wrapper(*args: P.args, **kwargs: P.kwargs) -> AsyncIterable[R]:
+            with self._record():
+                async for value in self.func(*args, **kwargs):
+                    yield value
+
+        return wrapper
 
 
 @overload
@@ -110,6 +165,7 @@ def profile(
     name: Optional[str] = None,
     /,
     report_every: Optional[int] = 1,
+    report_at_exit: bool = True,
     format: str = (
         "[bold][[[blue]{module}[/blue]:[green]{name}[/green]]][/bold]"
         " "
@@ -123,33 +179,22 @@ def profile(*args, **kwargs) -> Union[
     Callable[P, R],
     Callable[[Callable[P, R]], Callable[P, R]],
 ]:
-    arguments = ProfileArguments[P, R].unpack(*args, **kwargs)
+    func, arguments = ProfileArguments[P, R].unpack(*args, **kwargs)
     caller = inspect_caller()
 
     def decorated(func: Callable[P, R]) -> Callable[P, R]:
-        if not inspect.iscoroutinefunction(func):
-            context = ProfileContext[P, R](
-                caller=caller,
-                func=func,
-                name=arguments.name if arguments.name is not None else func.__name__,
-                report_every=arguments.report_every,
-                format=arguments.format,
-                logger=arguments.logger,
-            )
+        if arguments.name is None:
+            arguments.name = func.__name__
+
+        if inspect.isasyncgenfunction(func):
+            context = AsyncGeneratorFunctionProfileContext[P, R](caller=caller, func=func, arguments=arguments)
+        elif inspect.iscoroutinefunction(func):
+            context = AsyncFunctionProfileContext[P, R](caller=caller, func=func, arguments=arguments)
+        elif inspect.isgeneratorfunction(func):
+            context = GeneratorFunctionProfileContext[P, R](caller=caller, func=func, arguments=arguments)
         else:
-            context = AsyncProfileContext[P, R](
-                caller=caller,
-                func=func,
-                name=arguments.name if arguments.name is not None else func.__name__,
-                report_every=arguments.report_every,
-                format=arguments.format,
-                logger=arguments.logger,
-            )
+            context = FunctionProfileContext[P, R](caller=caller, func=func, arguments=arguments)
 
-        @functools.wraps(func)
-        def wrapper(*args: P.args, **kwargs: P.kwargs) -> Union[R, Coroutine[Any, Any, R]]:
-            return context.run(*args, **kwargs)
+        return functools.update_wrapper(context.build(), func)  # type:ignore
 
-        return wrapper  # type: ignore
-
-    return decorated(arguments.func) if arguments.func is not None else decorated
+    return decorated(func) if func is not None else decorated
