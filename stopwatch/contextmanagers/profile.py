@@ -3,10 +3,9 @@ import functools
 import inspect
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from typing import Any, AsyncIterable, Callable, Coroutine, Generic, Iterable, Optional, Tuple, TypeVar, Union
 
-from decorator import decorate
 from typing_extensions import ParamSpec, Self, overload
 
 from stopwatch.logger import DefaultLogger, SupportsInfo
@@ -25,6 +24,7 @@ class ProfileArguments(Generic[P, R]):
     report_every: Optional[int]
     report_at_exit: bool
     format: str
+    format_at_exit: str
     logger: SupportsInfo
 
     @classmethod
@@ -35,7 +35,14 @@ class ProfileArguments(Generic[P, R]):
             "report_at_exit": True,
             "format": (
                 "[bold][[[blue]{module}[/blue]:[green]{name}[/green]]][/bold]"
-                " "
+                " ~ "
+                "[magenta]{elapsed}[/magenta]"
+                " - "
+                "{statistics:hits, total, mean, min, median, max, stdev}"
+            ),
+            "format_at_exit": (
+                "[bold][[[blue]{module}[/blue]:[green]{name}[/green]]][/bold]"
+                " - "
                 "{statistics:hits, total, mean, min, median, max, stdev}"
             ),
             "logger": DefaultLogger(),
@@ -43,6 +50,7 @@ class ProfileArguments(Generic[P, R]):
 
         arguments = {**defaults, **kwargs}
         arguments["format"] = markup(arguments["format"])
+        arguments["format_at_exit"] = markup(arguments["format_at_exit"])
 
         func = None
         if args:
@@ -55,7 +63,7 @@ class ProfileArguments(Generic[P, R]):
 
 
 @dataclass
-class ProfileContext(Generic[P, R]):
+class ProfileContext(ABC, Generic[P, R]):
     caller: Caller
     func: Callable[P, R]
     arguments: ProfileArguments[P, R]
@@ -64,12 +72,11 @@ class ProfileContext(Generic[P, R]):
 
     def __post_init__(self):
         if self.arguments.report_at_exit:
-            atexit.register(self.print_report)
+            atexit.register(functools.partial(self.print_report, format=self.arguments.format_at_exit))
 
     @overload
     @abstractmethod
-    def build(self) -> Callable[P, R]: ...  # type: ignore
-
+    def build(self) -> Callable[P, R]: ...
     @overload
     @abstractmethod
     def build(self) -> Callable[P, Iterable[R]]: ...
@@ -86,8 +93,8 @@ class ProfileContext(Generic[P, R]):
     def should_report(self) -> bool:
         return (self.arguments.report_every is not None) and ((len(self.statistics) % self.arguments.report_every) == 0)
 
-    def print_report(self):
-        self.arguments.logger.info(self._make_report())
+    def print_report(self, format: str):
+        self.arguments.logger.info(self._make_report(format))
 
     @contextmanager
     def _record(self):
@@ -96,10 +103,10 @@ class ProfileContext(Generic[P, R]):
 
         self.statistics.add(stopwatch.elapsed)
         if self.should_report:
-            self.print_report()
+            self.print_report(self.arguments.format)
 
-    def _make_report(self) -> str:
-        return self.arguments.format.format(
+    def _make_report(self, format: str) -> str:
+        return format.format(
             module=self.caller.module,
             name=self.arguments.name,
             elapsed=format_time(self.statistics[-1]) if self.statistics else None,
@@ -168,7 +175,14 @@ def profile(
     report_at_exit: bool = True,
     format: str = (
         "[bold][[[blue]{module}[/blue]:[green]{name}[/green]]][/bold]"
-        " "
+        " ~ "
+        "[magenta]{elapsed}[/magenta]"
+        " - "
+        "{statistics:hits, total, mean, min, median, max, stdev}"
+    ),
+    format_at_exit: str = (
+        "[bold][[[blue]{module}[/blue]:[green]{name}[/green]]][/bold]"
+        " - "
         "{statistics:hits, total, mean, min, median, max, stdev}"
     ),
     logger: Optional[SupportsInfo] = None,
