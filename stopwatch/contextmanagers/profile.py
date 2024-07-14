@@ -4,7 +4,7 @@ import inspect
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from typing import Any, AsyncIterable, Callable, Coroutine, Generic, Iterable, Optional, Tuple, TypeVar, Union
+from typing import Any, AsyncIterable, Awaitable, Callable, Generic, Iterable, Optional, Tuple, TypeVar, Union
 
 from tml import markup
 from typing_extensions import ParamSpec, Self, overload
@@ -83,7 +83,7 @@ class ProfileContext(ABC, Generic[P, R]):
 
     @overload
     @abstractmethod
-    async def build(self) -> Callable[P, Coroutine[Any, Any, R]]: ...
+    async def build(self) -> Callable[P, Awaitable[R]]: ...
 
     @overload
     @abstractmethod
@@ -140,9 +140,9 @@ class GeneratorFunctionProfileContext(ProfileContext[P, R]):
 
 @dataclass
 class AsyncFunctionProfileContext(ProfileContext[P, R]):
-    func: Callable[P, Coroutine[Any, Any, R]]
+    func: Callable[P, Awaitable[R]]
 
-    def build(self) -> Callable[P, Coroutine[Any, Any, R]]:
+    def build(self) -> Callable[P, Awaitable[R]]:
         async def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
             with self._record():
                 return await self.func(*args, **kwargs)
@@ -209,6 +209,6 @@ def profile(*args, **kwargs) -> Union[
         else:
             context = FunctionProfileContext[P, R](caller=caller, func=func, arguments=arguments)
 
-        return functools.update_wrapper(context.build(), func)  # type:ignore
+        return functools.update_wrapper(context.build(), func)  # type: ignore
 
     return decorated(func) if func is not None else decorated
