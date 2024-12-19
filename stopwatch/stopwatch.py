@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import time
 from contextlib import contextmanager
-from typing import Optional
+from typing import Optional, List
 
 from typing_extensions import Self
 
@@ -12,18 +12,18 @@ from stopwatch.statistics import Statistics
 class Lap:
     __slots__ = ("_running", "_start", "_fractions")
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._running = False
-        self._start = 0
-        self._fractions = []
+        self._start: float = 0.0
+        self._fractions: List[float] = []
 
-    def start(self):
+    def start(self) -> None:
         self._running = True
         self._start = time.perf_counter()
 
-    def stop(self):
+    def stop(self) -> None:
         self._fractions.append(time.perf_counter() - self._start)
-        self._start = 0
+        self._start = 0.0
         self._running = False
 
     @property
@@ -39,9 +39,13 @@ class Stopwatch:
 
     def __init__(self, name: Optional[str] = None):
         self._name = name
+
+        self._lap: Optional[Lap]
+        self._laps: List[Lap]
+
         self.reset()
 
-    def start(self):
+    def start(self) -> None:
         if self._lap is None:
             self._laps.append(Lap())
             self._lap = self._laps[-1]
@@ -58,9 +62,9 @@ class Stopwatch:
             self._lap.stop()
             self._lap = None
 
-    def reset(self):
-        self._laps: list[Lap] = []
-        self._lap: Optional[Lap] = None
+    def reset(self) -> None:
+        self._laps = []
+        self._lap = None
 
     def report(self) -> str:
         tag = f"#{self.name}" if self.name is not None else ""
@@ -83,5 +87,5 @@ class Stopwatch:
         self.start()
         return self
 
-    def __exit__(self, *exception):
+    def __exit__(self, *exception) -> None:
         self.stop()

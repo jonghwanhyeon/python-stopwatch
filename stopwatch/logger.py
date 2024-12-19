@@ -11,8 +11,8 @@ class SupportsInfo(Protocol):
 class DefaultLogger:
     __slots__ = ("_file",)
 
-    def __init__(self, file: TextIO = sys.stderr):
+    def __init__(self, file: TextIO = sys.stderr) -> None:
         self._file = file
 
-    def info(self, message: str):
+    def info(self, message: str) -> None:
         print(message, file=self._file)

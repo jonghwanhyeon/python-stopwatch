@@ -200,6 +200,8 @@ def profile(*args, **kwargs) -> Union[
         if arguments.name is None:
             arguments.name = func.__name__
 
+        context: ProfileContext[P, R]
+
         if inspect.isasyncgenfunction(func):
             context = AsyncGeneratorFunctionProfileContext[P, R](caller=caller, func=func, arguments=arguments)
         elif inspect.iscoroutinefunction(func):
